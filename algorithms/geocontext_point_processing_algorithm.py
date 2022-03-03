@@ -22,6 +22,10 @@
  ***************************************************************************/
 """
 
+from utilities.utilities import (process_point,
+                                 convert_multipart_to_singlepart,
+                                 create_vector_file,
+                                 get_request_crs)
 __author__ = 'Kartoza'
 __date__ = '2022-02-20'
 __copyright__ = '(C) 2022 by Kartoza'
@@ -47,14 +51,12 @@ from qgis.core import (QgsProcessing,
 
 
 # Adds the plugin core path to the system path
-cur_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+cur_dir = os.path.dirname(
+    os.path.abspath(
+        inspect.getfile(
+            inspect.currentframe())))
 parentdir = os.path.dirname(cur_dir)
 sys.path.insert(0, parentdir)
-
-from utilities.utilities import (process_point,
-                                 convert_multipart_to_singlepart,
-                                 create_vector_file,
-                                 get_request_crs)
 
 
 class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
@@ -95,11 +97,12 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterEnum(
                 self.REGISTRY,
                 self.tr('Registry'),
-                options=[self.tr('Service'), self.tr('Group'), self.tr('Collection')],
+                options=[
+                    self.tr('Service'),
+                    self.tr('Group'),
+                    self.tr('Collection')],
                 defaultValue=0,
-                optional=False
-            )
-        )
+                optional=False))
 
         self.addParameter(
             QgsProcessingParameterEnum(
@@ -132,11 +135,14 @@ class GeocontextPointProcessingAlgorithm(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
 
-        input_points = self.parameterAsSource(parameters, self.INPUT_POINT_LAYER, context)
+        input_points = self.parameterAsSource(
+            parameters, self.INPUT_POINT_LAYER, context)
         registry = self.parameterAsString(parameters, self.REGISTRY, context)
         key = self.parameterAsString(parameters, self.KEY, context)
-        field_name = self.parameterAsString(parameters, self.FIELD_NAME, context)
-        output_points = self.parameterAsFileOutput(parameters, self.OUTPUT_POINT_LAYER, context)
+        field_name = self.parameterAsString(
+            parameters, self.FIELD_NAME, context)
+        output_points = self.parameterAsFileOutput(
+            parameters, self.OUTPUT_POINT_LAYER, context)
 
         print(str(input_points))
 

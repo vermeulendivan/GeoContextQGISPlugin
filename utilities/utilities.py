@@ -42,7 +42,10 @@ def get_request_crs():
     # Gets the coordinate system set by the user. Defaults to WGS84
     # NOTE: At the moment only WGS84 is selectable
     settings = QgsSettings()
-    request_crs = settings.value('geocontext-qgis-plugin/request_crs', "WGS84 (EPSG:4326)", type=str)
+    request_crs = settings.value(
+        'geocontext-qgis-plugin/request_crs',
+        "WGS84 (EPSG:4326)",
+        type=str)
 
     if request_crs == "WGS84 (EPSG:4326)":  # WGS84 coordinate system
         return QgsCoordinateReferenceSystem("EPSG:4326")
@@ -204,7 +207,8 @@ def point_request_dialog(x, y, registry, key, api_url):
     # Performs the request from the server based on the above information
     client = Client()
 
-    url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+    url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + \
+        key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
     data = client.get(url_request)
 
     return data
@@ -240,12 +244,15 @@ def process_point(input_point, registry, key_name, field_name):
     """
 
     settings = QgsSettings()
-    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_tool', 3, type=int)
-    api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. Set in the options dialog
+    rounding_factor = settings.value(
+        'geocontext-qgis-plugin/dec_places_tool', 3, type=int)
+    # Base URL. Set in the options dialog
+    api_url = settings.value('geocontext-qgis-plugin/url')
 
     # input_type = input_points.wkbType()  # Vector type for input
     # if input_type == 4:  # If a multipoint layer, otherwise skipped
-    #     self.convert_multipart_to_singlepart(input_new)  # Splits all multipart features into singlepart features
+    # self.convert_multipart_to_singlepart(input_new)  # Splits all multipart
+    # features into singlepart features
 
     # The user selected the 'Service' registry option
     if registry == 'Service':
@@ -271,8 +278,10 @@ def create_vector_file(input_layer, output_layer, layer_crs):
     :param layer_crs: Coordinate system for output vector file
     :type layer_crs: QgsCoordinateReferenceSystem
     """
-    status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(input_layer, output_layer, 'UTF-8', layer_crs)
-    if status_index == 2:  # File already exists and cannot be overwritten (locked)
+    status_index, msg = QgsVectorFileWriter.writeAsVectorFormat(
+        input_layer, output_layer, 'UTF-8', layer_crs)
+    # File already exists and cannot be overwritten (locked)
+    if status_index == 2:
         error_msg = "File creation error: " + msg
         return error_msg
 
@@ -290,7 +299,9 @@ def convert_multipart_to_singlepart(mp_layer):
     """
 
     feature_count = mp_layer.featureCount()  # Total number of feature of the layer
-    features_to_remove = []  # Multipart features which will be removed when split into multiple features
+    # Multipart features which will be removed when split into multiple
+    # features
+    features_to_remove = []
 
     # Skips this step if the layer is empty
     if feature_count > 0:
@@ -300,14 +311,18 @@ def convert_multipart_to_singlepart(mp_layer):
             if geom.isMultipart():  # Checked if the geometry is multipart
                 new_features = []
                 temp_feature = QgsFeature(mp_feat)  # Clone of the feature
-                features_to_remove.append(mp_feat.id())  # Feature will be removed
+                features_to_remove.append(
+                    mp_feat.id())  # Feature will be removed
 
-                for mp_part in geom.asGeometryCollection():  # Adds each part as a separate feature
+                for mp_part in geom.asGeometryCollection(
+                ):  # Adds each part as a separate feature
                     temp_feature.setGeometry(mp_part)
                     new_features.append(QgsFeature(temp_feature))
-                mp_layer.addFeatures(new_features)  # Adds the new features to the layer
+                # Adds the new features to the layer
+                mp_layer.addFeatures(new_features)
 
-        # Removes all of the multipart features which has been split into separate features
+        # Removes all of the multipart features which has been split into
+        # separate features
         for feat_to_remove_id in features_to_remove:
             mp_layer.deleteFeature(feat_to_remove_id)
 
