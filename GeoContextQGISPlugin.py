@@ -115,7 +115,8 @@ class GeoContextQGISPlugin:
         self.message_bar = self.iface.messageBar()
 
         self.canvas = self.iface.mapCanvas()
-        self.point_tool = QgsMapToolEmitPoint(self.canvas)  # Enables the cursor tool for selecting locations
+        # Enables the cursor tool for selecting locations
+        self.point_tool = QgsMapToolEmitPoint(self.canvas)
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -132,7 +133,17 @@ class GeoContextQGISPlugin:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeoContextQGISPlugin', message)
 
-    def add_action(self, icon_path, text, callback, enabled_flag=True, add_to_menu=True, add_to_toolbar=True, status_tip=None, whats_this=None, parent=None):
+    def add_action(
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -229,13 +240,14 @@ class GeoContextQGISPlugin:
 
         self.initProcessing()
 
-        # Trigger for when the user clicks in the canvas when the panel is open and the cursor is active
+        # Trigger for when the user clicks in the canvas when the panel is open
+        # and the cursor is active
         self.point_tool.canvasClicked.connect(self.canvas_click)
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING GeoContextQGISPlugin"
+        # print "** CLOSING GeoContextQGISPlugin"
 
         # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
@@ -269,14 +281,15 @@ class GeoContextQGISPlugin:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING GeoContextQGISPlugin"
+            # print "** STARTING GeoContextQGISPlugin"
 
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
+            if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = GeoContextQGISPluginDockWidget(self.canvas, self.point_tool, self.iface)
+                self.dockwidget = GeoContextQGISPluginDockWidget(
+                    self.canvas, self.point_tool, self.iface)
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
@@ -314,8 +327,10 @@ class GeoContextQGISPlugin:
         """
 
         # Directory of the index.html file used for the help option
-        help_file_dir = '%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
-        help_file = 'file:///%s/resources/help/build/html/index.html' % os.path.dirname(__file__)
+        help_file_dir = '%s/resources/help/build/html/index.html' % os.path.dirname(
+            __file__)
+        help_file = 'file:///%s/resources/help/build/html/index.html' % os.path.dirname(
+            __file__)
 
         # Checks whether the required html document exist
         if os.path.exists(help_file_dir):
@@ -352,15 +367,17 @@ class GeoContextQGISPlugin:
         :rtype: OrderedDict
         """
 
-        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
+        url_request = api_url + "query?" + 'registry=' + registry.lower() + '&key=' + \
+            key + '&x=' + str(x) + '&y=' + str(y) + '&outformat=json'
 
         # Attempts to perform a data request from the API server
         try:
-            # STILL NEED TO ADD TOKEN HERE ===========================================================================================
+            # STILL NEED TO ADD TOKEN HERE ====================================
             client = ApiClient()
             data = client.get(url_request)
         except Exception as e:
-            error_msg = "Could not request " + url_request + ". Unknown error: " + str(e)
+            error_msg = "Could not request " + \
+                url_request + ". Unknown error: " + str(e)
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
             print(str(e))
 
@@ -378,16 +395,19 @@ class GeoContextQGISPlugin:
         """
 
         settings = QgsSettings()
-        api_url = settings.value('geocontext-qgis-plugin/url')  # Base URL. This will/should be set in  the options dialog
+        # Base URL. This will/should be set in  the options dialog
+        api_url = settings.value('geocontext-qgis-plugin/url')
 
         # The coordinates from the QGIS canvas point tool
         x = point_tool[0]  # Longitude
         y = point_tool[1]  # Latitude
 
-        canvas_crs = get_canvas_crs(self.iface)  # The coordinate system the QGIS project canvas uses
+        # The coordinate system the QGIS project canvas uses
+        canvas_crs = get_canvas_crs(self.iface)
         target_crs = get_request_crs()  # GeoContext request needs to be in WGS84
         if canvas_crs != target_crs:  # If the canvas coordinate system is not WGS84
-            # Transforms the canvas point coordinates to WGS84 prior to requesting the data
+            # Transforms the canvas point coordinates to WGS84 prior to
+            # requesting the data
             x, y = transform_xy_coordinates(x, y, canvas_crs, target_crs)
 
         # Sets the panel values to the above
@@ -402,69 +422,95 @@ class GeoContextQGISPlugin:
         registry = self.dockwidget.cbRegistry.currentText()  # Service, group or collection
 
         key_name = self.dockwidget.cbKey.currentText()  # Key name, e.g. Elevation
-        dict_key = self.dockwidget.find_name_info(key_name,registry)  # Retrieves the request key using the selected key name
+        # Retrieves the request key using the selected key name
+        dict_key = self.dockwidget.find_name_info(key_name, registry)
         key = dict_key['key']
 
         data = self.point_request_panel(x, y, registry, key, api_url)
 
-        # Checks whether the request has been successful. None indicates unsuccessful
+        # Checks whether the request has been successful. None indicates
+        # unsuccessful
         if data is not None:
             data = data.json()  # Retrieves the json data from the API response
 
             # Request ends
             end = time.time()
-            rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-            request_time_ms = round((end - start)*1000, rounding_factor)
-            self.dockwidget.lblRequestTime.setText("Request time (ms): " + str(request_time_ms))
+            rounding_factor = settings.value(
+                'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+            request_time_ms = round((end - start) * 1000, rounding_factor)
+            self.dockwidget.lblRequestTime.setText(
+                "Request time (ms): " + str(request_time_ms))
 
             registry = self.dockwidget.cbRegistry.currentText()
             # Service option
             if registry.lower() == 'service':
-                # If set in the options dialog, the table will automatically be cleared
-                auto_clear_table = settings.value('geocontext-qgis-plugin/auto_clear_table', False, type=bool)
+                # If set in the options dialog, the table will automatically be
+                # cleared
+                auto_clear_table = settings.value(
+                    'geocontext-qgis-plugin/auto_clear_table', False, type=bool)
                 if auto_clear_table:
                     self.dockwidget.clear_results_table()
 
                 point_value_str = data['value']  # Retrieves the value
-                rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                rounding_factor = settings.value(
+                    'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                point_value_str = apply_decimal_places_to_float_panel(
+                    point_value_str, rounding_factor)
 
-                self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
-                self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                # Always add at the top of the table
+                self.dockwidget.tblResult.insertRow(0)
+                self.dockwidget.tblResult.setItem(
+                    0, 0, QTableWidgetItem(current_key_name))  # Sets the key in the table
+                self.dockwidget.tblResult.setItem(
+                    0, 1, QTableWidgetItem(
+                        str(point_value_str)))  # Sets the description
             # Group option
             elif registry.lower() == "group":
                 # group_name = data['name']
-                list_dict_services = data["services"]  # Service files for a group
+                # Service files for a group
+                list_dict_services = data["services"]
                 for dict_service in list_dict_services:
                     # key = dict_service['key']
                     point_value_str = dict_service['value']
-                    rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                    point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                    rounding_factor = settings.value(
+                        'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                    point_value_str = apply_decimal_places_to_float_panel(
+                        point_value_str, rounding_factor)
 
                     service_key_name = dict_service['name']
 
-                    self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                    self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                    self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                    # Always add at the top of the table
+                    self.dockwidget.tblResult.insertRow(0)
+                    self.dockwidget.tblResult.setItem(
+                        0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                    self.dockwidget.tblResult.setItem(
+                        0, 1, QTableWidgetItem(
+                            str(point_value_str)))  # Sets the description
             # Collection option
             elif registry.lower() == "collection":
-                list_dict_groups = data["groups"]  # Each group contains a list of the 'Service' data associated with the group
+                # Each group contains a list of the 'Service' data associated
+                # with the group
+                list_dict_groups = data["groups"]
                 for dict_group in list_dict_groups:
                     # group_name = dict_group['name']
-                    list_dict_services = dict_group["services"]  # Service files for a group
+                    # Service files for a group
+                    list_dict_services = dict_group["services"]
                     for dict_service in list_dict_services:
                         # key = dict_service['key']
                         point_value_str = dict_service['value']
-                        rounding_factor = settings.value('geocontext-qgis-plugin/dec_places_panel', 3, type=int)
-                        point_value_str = apply_decimal_places_to_float_panel(point_value_str, rounding_factor)
+                        rounding_factor = settings.value(
+                            'geocontext-qgis-plugin/dec_places_panel', 3, type=int)
+                        point_value_str = apply_decimal_places_to_float_panel(
+                            point_value_str, rounding_factor)
 
                         service_key_name = dict_service['name']
 
-                        self.dockwidget.tblResult.insertRow(0)  # Always add at the top of the table
-                        self.dockwidget.tblResult.setItem(0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
-                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(str(point_value_str)))  # Sets the description
+                        # Always add at the top of the table
+                        self.dockwidget.tblResult.insertRow(0)
+                        self.dockwidget.tblResult.setItem(
+                            0, 0, QTableWidgetItem(service_key_name))  # Sets the key in the table
+                        self.dockwidget.tblResult.setItem(0, 1, QTableWidgetItem(
+                            str(point_value_str)))  # Sets the description
         else:  # Request were unsuccessful
             error_msg = "Could not perform data request. Check if the endpoint URL is correct."
             self.iface.messageBar().pushCritical("Request error: ", error_msg)
-
